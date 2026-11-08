@@ -71,6 +71,47 @@ test("no rules folder: base instructions only", async () => {
   }
 });
 
+async function callRulesTool(store: MemoryStore) {
+  const server = buildServer(store);
+  const [a, b] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test", version: "1" });
+  await Promise.all([server.connect(a), client.connect(b)]);
+  const result = (await client.callTool({ name: "memory_rules", arguments: {} })) as {
+    content: { type: string; text: string }[];
+  };
+  await client.close();
+  return result.content[0].text;
+}
+
+test("memory_rules returns the core rules even when instructions aren't used", async () => {
+  const { root, store } = await tempStore();
+  try {
+    await mkdir(path.join(root, "rules"));
+    await mkdir(path.join(root, "guidelines"));
+    await writeFile(path.join(root, "rules/git.md"), "---\ntitle: Git\n---\n- Never push to main.\n");
+    await writeFile(path.join(root, "rules/README.md"), "This folder holds rules.\n");
+    await writeFile(path.join(root, "guidelines/email.md"), "- Sign emails with just my first name.\n");
+
+    const out = await callRulesTool(store);
+    assert.match(out, /The user's standing rules/);
+    assert.match(out, /### rules\/git\.md\n- Never push to main\./);
+    assert.doesNotMatch(out, /This folder holds rules/);
+    assert.doesNotMatch(out, /Sign emails/); // guidelines stay out
+    assert.match(out, /guidelines\//);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("memory_rules says so when there are no rules", async () => {
+  const { root, store } = await tempStore();
+  try {
+    assert.match(await callRulesTool(store), /No core rules saved yet/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("guidelines are not loaded up front, only pointed to", async () => {
   const { root, store } = await tempStore();
   try {
