@@ -45,6 +45,7 @@ async function main() {
     const fromPath = req.params.token;
     const supplied = (typeof fromPath === "string" ? fromPath : undefined) ?? header ?? "";
     if (safeEqual(supplied, token)) return next();
+    console.log(`[memory] ${req.method} rejected 401 (bad or missing token)`);
     res.status(401).json({ error: "unauthorized" });
   };
 
@@ -54,6 +55,7 @@ async function main() {
   const handle = async (req: Request, res: Response) => {
     const messages = Array.isArray(req.body) ? req.body : [req.body];
     const initializing = messages.some((m) => m?.method === "initialize");
+    logRequest(req, res, messages);
     const server = buildServer(store, initializing ? await buildInstructions(store) : undefined);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on("close", () => {
@@ -74,6 +76,26 @@ async function main() {
 
   const port = Number(env.PORT ?? 8787);
   app.listen(port, () => console.log(`[memory] http server on :${port}, root=${store.root}`));
+}
+
+/**
+ * One line per MCP request: which methods (and tool names) a client called,
+ * the status and how long it took. Never logs arguments, results or the token,
+ * so the log is safe to read and share.
+ */
+function logRequest(req: Request, res: Response, messages: unknown[]) {
+  const started = Date.now();
+  const calls = messages
+    .map((m) => {
+      const msg = m as { method?: string; params?: { name?: string } } | undefined;
+      if (!msg?.method) return undefined;
+      return msg.method === "tools/call" && msg.params?.name ? `tools/call:${msg.params.name}` : msg.method;
+    })
+    .filter(Boolean)
+    .join(",");
+  res.on("finish", () => {
+    console.log(`[memory] ${req.method} ${calls || "-"} ${res.statusCode} ${Date.now() - started}ms`);
+  });
 }
 
 function safeEqual(a: string, b: string) {
