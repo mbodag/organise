@@ -59,9 +59,10 @@ public. The server's own `MCP_AUTH_TOKEN` stays the access control.
 - **The first request after idle pays a wake-up.** Fly says it is under a second. We
   verify this from the phone before relying on it; if it is too slow, we fall back to
   Machines.
-- **Secrets handling is unproven.** The guides don't say how a Sprite service receives
-  environment secrets (`MCP_AUTH_TOKEN`, the GitHub token). We settle this during setup
-  and record it in the deploy script.
+- **Secrets live in a file on the Sprite.** The guides don't say how a Sprite service
+  receives environment secrets, so `memory-mcp/scripts/start.sh` reads them from
+  `~/.memory-mcp.env`, written by `sprite-setup.sh`. Access to the memory repo uses an SSH
+  deploy key ([ADR 0005](0005-access-token-url-and-deploy-key.md)).
 - **Costs** are tracked in [`../costs.md`](../costs.md).
 
 ## Revisit when
