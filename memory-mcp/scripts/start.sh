@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 ENV_FILE="${MEMORY_ENV_FILE:-$HOME/.memory-mcp.env}"
 if [[ ! -f "$ENV_FILE" ]]; then
-  echo "[memory] missing $ENV_FILE (MCP_AUTH_TOKEN, GIT_REMOTE): see DEPLOY.md" >&2
+  echo "[memory] missing $ENV_FILE: run scripts/sprite-setup.sh (see DEPLOY.md)" >&2
   exit 1
 fi
 set -a
