@@ -3,16 +3,34 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { MemoryStore } from "./store.js";
 
-const INSTRUCTIONS = `Personal memory: a folder of Markdown files about the user's life.
+const BASE_INSTRUCTIONS = `Personal memory: a folder of Markdown files about the user's life.
 Before answering questions about the user, people, projects or past decisions, call memory_search.
 Before creating a file, search for an existing one to update instead.
-Start with INDEX.md to learn how the memory is organized, and follow its conventions.`;
+Start with INDEX.md to learn how the memory is organized, and follow its conventions.
 
-export function buildServer(store: MemoryStore): McpServer {
-  const server = new McpServer(
-    { name: "personal-memory", version: "0.1.0" },
-    { instructions: INSTRUCTIONS },
-  );
+Standing rules live in rules/ (one file per topic, e.g. rules/git.md, rules/projects.md).
+When the user states a new standing rule ("from now on...", "always...", "every project..."),
+save it to the right rules/ file with memory_append (or read, then memory_write to edit one),
+and confirm in one line. The rules below are loaded at the start of each conversation.`;
+
+/** Server instructions: the base text plus the user's current rules/ files. */
+export async function buildInstructions(store: MemoryStore): Promise<string> {
+  let rules;
+  try {
+    rules = await store.readRules();
+  } catch (err) {
+    console.error("[memory] could not read rules:", (err as Error).message);
+    return BASE_INSTRUCTIONS;
+  }
+  if (!rules.text) return BASE_INSTRUCTIONS;
+  const note = rules.truncated
+    ? "\n\n(Some rules files were left out because of the size limit: use memory_list on rules/ and read the rest.)"
+    : "";
+  return `${BASE_INSTRUCTIONS}\n\n## The user's standing rules (follow them)\n\n${rules.text}${note}`;
+}
+
+export function buildServer(store: MemoryStore, instructions: string = BASE_INSTRUCTIONS): McpServer {
+  const server = new McpServer({ name: "personal-memory", version: "0.1.0" }, { instructions });
 
   const text = (s: string) => ({ content: [{ type: "text" as const, text: s }] });
   const safe =
