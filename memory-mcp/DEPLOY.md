@@ -73,10 +73,8 @@ sprite exec -- tail -n 50 /.sprite/logs/services/memory.log
 
 ## Not yet verified
 
-These steps follow Fly's Sprites guide but haven't been run end to end yet:
+Verified on 2026-11-08: Sprites ship with `openssh-client` and Node, reach github.com on
+port 22 (host key matched GitHub's fingerprint), and `sprite-env services list` prints JSON.
+Still to verify:
 
-- the output format of `sprite-env services list`, which the deploy script greps
-- whether a Sprite has `openssh-client` and can reach github.com on port 22. `sprite-setup.sh`
-  installs the client if it can and says clearly if port 22 is blocked. If it is, fall back
-  to a fine-grained HTTPS token in `GIT_REMOTE`
 - that a sleeping Sprite wakes fast enough for the connector (ADR 0001 says to test this from the phone)

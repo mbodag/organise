@@ -18,7 +18,8 @@ cd memory-mcp
 npm ci --no-audit --no-fund
 npm run build
 
-if sprite-env services list | grep -qw "$SERVICE"; then
+# `services list` prints JSON: [{"name":"memory",...}]
+if sprite-env services list | grep -q "\"name\":\"$SERVICE\""; then
   sprite-env services restart "$SERVICE"
   echo "[deploy] restarted service $SERVICE"
 else
