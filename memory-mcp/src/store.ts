@@ -192,6 +192,34 @@ export class MemoryStore {
   }
 
   /**
+   * The user's standing rules: every Markdown file under rules/ except
+   * README.md, as one text block for the server instructions. Output is capped
+   * at maxBytes so a large rules folder can't flood the context window.
+   */
+  async readRules(maxBytes = 8 * 1024): Promise<{ text: string; files: string[]; truncated: boolean }> {
+    const dir = this.resolve("rules");
+    if (!(await exists(dir))) return { text: "", files: [], truncated: false };
+    const files = (await this.list("rules", true)).filter(
+      (f) => f.endsWith(".md") && path.posix.basename(f).toLowerCase() !== "readme.md",
+    );
+
+    let text = "";
+    const included: string[] = [];
+    let truncated = false;
+    for (const file of files) {
+      const { body } = splitFrontmatter(await fs.readFile(this.resolve(file), "utf8"));
+      const section = `### ${file}\n${body.trim()}\n\n`;
+      if (Buffer.byteLength(text + section) > maxBytes) {
+        truncated = true;
+        break;
+      }
+      text += section;
+      included.push(file);
+    }
+    return { text: text.trim(), files: included, truncated };
+  }
+
+  /**
    * Keyword search. Matches in the file path and in title/tags weigh more
    * than matches in the body. Swap this for embeddings later without
    * changing the tool interface.
