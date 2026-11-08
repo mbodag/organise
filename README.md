@@ -20,6 +20,8 @@ Claude Code only: the personal-agent plugin adds the memory-keeper skill and /re
 | `plugin/` | Claude Code plugin: the `memory-keeper` skill, slash commands, and an optional MCP config |
 | `.claude-plugin/marketplace.json` | Lets you install the plugin straight from this repo |
 
+Architecture diagram and status: [`docs/architecture.html`](docs/architecture.html) (download and open in a browser). Running costs: [`docs/costs.md`](docs/costs.md).
+
 ## 1. Create the memory repo
 
 Create a **private** GitHub repo (for example `my-memory`), and copy the contents of

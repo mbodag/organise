@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Agent Architecture</title>
+<style>
+  :root {
+    --bg: #f7f6f2; --surface: #ffffff; --surface-2: #f0eee8; --text: #1d1d1b; --muted: #6b6a65;
+    --border: #d9d6cc; --accent: #2f5fb3;
+    --live: #2e7d4f; --live-bg: #e3f2e8;
+    --built: #a3620a; --built-bg: #fbefd9;
+    --planned: #7a7a7a; --planned-bg: #ececec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161614; --surface: #1f1f1d; --surface-2: #2a2a27; --text: #ecebe6; --muted: #a09e97;
+      --border: #3a3935; --accent: #7aa2ec;
+      --live: #6fcf97; --live-bg: #1d3426;
+      --built: #f0b45c; --built-bg: #3a2c14;
+      --planned: #a8a8a8; --planned-bg: #2c2c2c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161614; --surface: #1f1f1d; --surface-2: #2a2a27; --text: #ecebe6; --muted: #a09e97;
+    --border: #3a3935; --accent: #7aa2ec;
+    --live: #6fcf97; --live-bg: #1d3426;
+    --built: #f0b45c; --built-bg: #3a2c14;
+    --planned: #a8a8a8; --planned-bg: #2c2c2c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.9rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 1.25rem; margin: 40px 0 12px; }
+  p { margin: 0 0 12px; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 12px; font-size: 0.9rem; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px;
+          font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+  .chip.live { color: var(--live); background: var(--live-bg); }
+  .chip.built { color: var(--built); background: var(--built-bg); }
+  .chip.planned { color: var(--planned); background: var(--planned-bg); }
+  .diagram { width: 100%; min-width: 760px; height: auto; display: block; }
+  .hint { display: none; color: var(--muted); font-size: 0.8rem; margin: 0 0 8px; }
+  @media (max-width: 800px) { .hint { display: block; } table { min-width: 560px; } }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  code { font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface-2);
+         padding: 1px 5px; border-radius: 4px; }
+  .totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .total .label { color: var(--muted); font-size: 0.85rem; }
+  .total .value { font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .total .note { color: var(--muted); font-size: 0.85rem; }
+  .flow { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .flow li { counter-increment: s; position: relative; padding: 0 0 12px 40px; }
+  .flow li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 26px; height: 26px;
+         border-radius: 50%; background: var(--accent); color: var(--surface); font-weight: 700;
+         font-size: 0.85rem; display: grid; place-items: center; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 0.85rem; }
+  a { color: var(--accent); }
+
+  /* SVG */
+  .box { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+  .group { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; }
+  .live-s { stroke: var(--live); stroke-width: 2; }
+  .built-s { stroke: var(--built); stroke-width: 2; }
+  .planned-s { stroke: var(--planned); stroke-width: 2; stroke-dasharray: 6 5; }
+  .t { fill: var(--text); font-size: 15px; font-weight: 600; }
+  .s { fill: var(--muted); font-size: 12.5px; }
+  .g { fill: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+  .arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+  .arrow.planned { stroke-dasharray: 5 4; }
+  .lbl { fill: var(--muted); font-size: 11.5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Personal Agent Architecture</h1>
+  <p class="sub">How the pieces fit, where each one lives, and what it costs. Last updated 2026-11-08.</p>
+
+  <div class="legend" aria-label="Status legend">
+    <span class="chip live">● Live</span>
+    <span class="chip built">● Built, not deployed</span>
+    <span class="chip planned">● Planned</span>
+  </div>
+
+  <p class="hint">Scroll sideways to see the whole diagram →</p>
+  <div class="card scroll">
+    <svg class="diagram" viewBox="0 0 1000 600" role="img"
+         aria-label="You talk to Claude from phone, web or Claude Code. Claude uses connectors: the memory server on Fly.io, which syncs with the private memory repo on GitHub, plus Google and Atlassian. In Claude Code, the personal-agent plugin from the organise repo adds skills and commands.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+
+      <!-- Column labels -->
+      <text class="g" x="30" y="40">YOU</text>
+      <text class="g" x="290" y="40">CLAUDE (ANTHROPIC)</text>
+      <text class="g" x="660" y="40">SERVICES</text>
+
+      <!-- You -->
+      <rect class="box live-s" x="30" y="70" width="190" height="72" rx="10"/>
+      <text class="t" x="46" y="100">Phone</text>
+      <text class="s" x="46" y="122">Claude app · text + voice</text>
+
+      <rect class="box live-s" x="30" y="166" width="190" height="72" rx="10"/>
+      <text class="t" x="46" y="196">Web</text>
+      <text class="s" x="46" y="218">claude.ai</text>
+
+      <rect class="box live-s" x="30" y="262" width="190" height="72" rx="10"/>
+      <text class="t" x="46" y="292">Claude Code</text>
+      <text class="s" x="46" y="314">laptop or cloud session</text>
+
+      <!-- Claude -->
+      <rect class="group" x="290" y="60" width="290" height="500" rx="14"/>
+      <text class="t" x="308" y="92">Claude</text>
+      <text class="s" x="308" y="112">reads rules/ at the start of each chat</text>
+
+      <rect class="box live-s" x="308" y="130" width="254" height="196" rx="10"/>
+      <text class="t" x="324" y="158">Connectors</text>
+      <text class="s" x="324" y="182">claude.ai account · every surface</text>
+      <text class="s" x="324" y="210">• Personal memory  (planned)</text>
+      <text class="s" x="324" y="232">• Google Calendar · Gmail · Drive</text>
+      <text class="s" x="324" y="254">• Atlassian (Jira, personal use)</text>
+      <text class="s" x="324" y="282">Set up at</text>
+      <text class="s" x="324" y="302">claude.ai/customize/connectors</text>
+
+      <rect class="box built-s" x="308" y="348" width="254" height="192" rx="10"/>
+      <text class="t" x="324" y="376">personal-agent plugin</text>
+      <text class="s" x="324" y="400">Claude Code only</text>
+      <text class="s" x="324" y="428">• skill: memory-keeper</text>
+      <text class="s" x="324" y="450">• /remember /recall /tidy /brief</text>
+      <text class="s" x="324" y="472">• .mcp.json → memory server</text>
+      <text class="s" x="324" y="494">• next: rules-keeper skill +</text>
+      <text class="s" x="324" y="514">  SessionStart hook (#4)</text>
+
+      <!-- Services -->
+      <rect class="box planned-s" x="660" y="70" width="310" height="104" rx="10"/>
+      <text class="t" x="676" y="100">Memory server · Fly.io</text>
+      <text class="s" x="676" y="122">memory-mcp · 7 memory_* tools</text>
+      <text class="s" x="676" y="142">sends rules/ in its instructions</text>
+      <text class="s" x="676" y="162">1 always-on machine · ~$2.19/mo</text>
+
+      <rect class="box live-s" x="660" y="214" width="310" height="104" rx="10"/>
+      <text class="t" x="676" y="244">mbodag/memory · GitHub</text>
+      <text class="s" x="676" y="266">private · your notes as Markdown</text>
+      <text class="s" x="676" y="286">rules/ (always loaded) · guidelines/</text>
+      <text class="s" x="676" y="306">people/ projects/ areas/ journal/ …</text>
+
+      <rect class="box live-s" x="660" y="352" width="310" height="76" rx="10"/>
+      <text class="t" x="676" y="382">Google · Atlassian</text>
+      <text class="s" x="676" y="404">Calendar, Gmail, Drive, Jira</text>
+
+      <rect class="box live-s" x="660" y="460" width="310" height="100" rx="10"/>
+      <text class="t" x="676" y="490">mbodag/organise · GitHub</text>
+      <text class="s" x="676" y="512">public · code: memory-mcp/, plugin/,</text>
+      <text class="s" x="676" y="532">memory-template/ · PRs into main</text>
+      <text class="s" x="676" y="550">issues = backlog</text>
+
+      <!-- Arrows: you -> Claude -->
+      <path class="arrow" d="M220,106 L288,170" marker-end="url(#ah)"/>
+      <path class="arrow" d="M220,202 L288,210" marker-end="url(#ah)"/>
+      <path class="arrow" d="M220,298 L288,300" marker-end="url(#ah)"/>
+
+      <!-- Connectors -> memory server -->
+      <path class="arrow planned" d="M562,180 C610,180 610,122 658,122" marker-end="url(#ah)"/>
+      <text class="lbl" x="588" y="146">MCP</text>
+
+      <!-- Memory server <-> memory repo -->
+      <path class="arrow planned" d="M815,174 L815,212" marker-start="url(#ah)" marker-end="url(#ah)"/>
+      <text class="lbl" x="824" y="198">git pull / push</text>
+
+      <!-- Connectors -> Google/Atlassian -->
+      <path class="arrow" d="M562,260 C610,260 610,390 658,390" marker-end="url(#ah)"/>
+
+      <!-- organise -> plugin (install) -->
+      <path class="arrow" d="M658,500 C610,500 610,450 564,450" marker-end="url(#ah)"/>
+      <text class="lbl" x="588" y="492">install</text>
+
+      <!-- organise -> Fly (deploy) -->
+      <path class="arrow planned" d="M970,510 C995,510 995,122 972,122" marker-end="url(#ah)"/>
+      <text class="lbl" x="978" y="330" transform="rotate(-90 978 330)" text-anchor="middle">deploy</text>
+    </svg>
+  </div>
+
+  <h2>Where everything lives</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Part</th><th>Where</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Your memory</strong>: notes, <code>rules/</code>, <code>guidelines/</code></td>
+            <td><a href="https://github.com/mbodag/memory">mbodag/memory</a> (private). Commits go straight to <code>main</code></td>
+            <td><span class="chip live">Live</span></td></tr>
+        <tr><td><strong>Memory server code</strong> (<code>memory-mcp/</code>)</td>
+            <td><a href="https://github.com/mbodag/organise">mbodag/organise</a> (public)</td>
+            <td><span class="chip built">Built</span></td></tr>
+        <tr><td><strong>Running memory server</strong></td>
+            <td>Fly.io: one always-on machine, <code>https://&lt;app&gt;.fly.dev/mcp/&lt;token&gt;</code></td>
+            <td><span class="chip planned">Planned · #2</span></td></tr>
+        <tr><td><strong>Memory connector</strong></td>
+            <td>claude.ai → Customize → Connectors</td>
+            <td><span class="chip planned">Planned · #2</span></td></tr>
+        <tr><td><strong>Plugin</strong>: skills, commands, MCP config</td>
+            <td><code>organise/plugin/</code>, installed with <code>/plugin marketplace add mbodag/organise</code></td>
+            <td><span class="chip built">Built</span></td></tr>
+        <tr><td><strong>Memory template</strong></td>
+            <td><code>organise/memory-template/</code>. Used once to seed the memory repo, and for local testing</td>
+            <td><span class="chip live">Done</span></td></tr>
+        <tr><td><strong>Agent instructions for the code repo</strong></td>
+            <td><code>organise/AGENTS.md</code>, imported by <code>CLAUDE.md</code></td>
+            <td><span class="chip live">Live</span></td></tr>
+        <tr><td><strong>Backlog</strong></td>
+            <td><a href="https://github.com/mbodag/organise/issues">GitHub Issues on organise</a></td>
+            <td><span class="chip live">Live</span></td></tr>
+        <tr><td><strong>Google &amp; Atlassian connectors</strong></td>
+            <td>Your claude.ai account</td>
+            <td><span class="chip live">Live</span></td></tr>
+        <tr><td><strong>Main branch protection</strong></td>
+            <td>"Protect Main" ruleset on organise: PR required, no force push</td>
+            <td><span class="chip live">Live</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>What happens when you say "remember Sarah's birthday is March 14"</h2>
+  <div class="card">
+    <ol class="flow">
+      <li>When the chat starts, Claude connects to the memory server, which sends its instructions together with your core <code>rules/</code>.</li>
+      <li>Claude calls <code>memory_search("sarah")</code>. The server pulls the latest notes from GitHub, then searches them.</li>
+      <li>It finds <code>people/sarah-chen.md</code> and calls <code>memory_append</code> to add the birthday.</li>
+      <li>The server writes the file, then commits and pushes it to <code>mbodag/memory</code>. You can see the change on GitHub.</li>
+      <li>Next week, in a new chat on any device, Claude searches, reads the note, and answers.</li>
+    </ol>
+  </div>
+
+  <h2>Costs</h2>
+  <div class="totals">
+    <div class="card total"><div class="label">Today</div><div class="value">$0</div>
+      <div class="note">per month, on top of your Claude plan</div></div>
+    <div class="card total"><div class="label">After deploying the memory server</div><div class="value">~$2.19</div>
+      <div class="note">per month, on top of your Claude plan</div></div>
+  </div>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Item</th><th>For</th><th>Status</th><th class="num">Per month</th></tr></thead>
+      <tbody>
+        <tr><td>Claude subscription</td><td>Apps, Claude Code, connectors</td><td><span class="chip live">Existing</span></td><td class="num">your plan</td></tr>
+        <tr><td>GitHub Free</td><td>organise (public), memory (private)</td><td><span class="chip live">Live</span></td><td class="num">$0</td></tr>
+        <tr><td>Fly.io machine</td><td>shared-cpu-1x, 256 MB, always on</td><td><span class="chip planned">Planned</span></td><td class="num">~$2.19</td></tr>
+        <tr><td>Fly.io IPv4 + bandwidth</td><td>Shared IPv4, light text traffic</td><td><span class="chip planned">Planned</span></td><td class="num">~$0</td></tr>
+        <tr><td>Google &amp; Atlassian connectors</td><td>Calendar, Gmail, Drive, Jira</td><td><span class="chip live">Live</span></td><td class="num">$0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:12px">Optional, not chosen: GitHub Pro $4/mo · GitHub Team $4/user/mo · Railway ~$5/mo · Render ~$7/mo.
+    Future: Claude API usage if we build our own client (#6). Full breakdown and sources in
+    <a href="costs.md">costs.md</a>, which is the file to update first.</p>
+
+  <footer>Source: <code>docs/architecture.html</code> in mbodag/organise. Update it when a part moves or changes status.</footer>
+</main>
+</body>
+</html>
