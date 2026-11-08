@@ -6,7 +6,7 @@ import { timingSafeEqual } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MemoryStore } from "./store.js";
-import { buildServer } from "./server.js";
+import { buildInstructions, buildServer } from "./server.js";
 
 const env = process.env;
 
@@ -20,7 +20,7 @@ async function main() {
   await store.init();
 
   if (process.argv.includes("--stdio")) {
-    await buildServer(store).connect(new StdioServerTransport());
+    await buildServer(store, await buildInstructions(store)).connect(new StdioServerTransport());
     console.error(`[memory] stdio server ready, root=${store.root}`);
     return;
   }
@@ -49,8 +49,12 @@ async function main() {
   };
 
   // Stateless: a fresh server + transport per request. Simple, and fine for one user.
+  // Instructions only travel in the initialize response, so the rules files
+  // are read only for that request: edits show up on the next connection.
   const handle = async (req: Request, res: Response) => {
-    const server = buildServer(store);
+    const messages = Array.isArray(req.body) ? req.body : [req.body];
+    const initializing = messages.some((m) => m?.method === "initialize");
+    const server = buildServer(store, initializing ? await buildInstructions(store) : undefined);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     res.on("close", () => {
       transport.close();
