@@ -58,6 +58,25 @@ with `main`. Commands below run wherever the `sprite` CLI is installed and logge
    sprite exec -- grep MCP_AUTH_TOKEN .memory-mcp.env
    ```
 
+## Finding the URL later
+
+On a machine where the `sprite` CLI isn't set up yet, install it and log in first (step 1 above),
+then pick the Sprite:
+
+```bash
+sprite login
+sprite use memory
+sprite info                            # prints https://<name>-<org>.sprites.app
+curl https://<sprite-url>/health       # {"ok":true}
+```
+
+Without the CLI, the address is also in claude.ai → Settings → Connectors, in the personal-memory
+connector's URL: everything before `/mcp/`. The rest of that URL is the token, so don't copy it
+anywhere.
+
+The connector URL is that address plus `/mcp/<MCP_AUTH_TOKEN>`. The URL isn't written down
+in this repo because the repo is public; `sprite info` is the source of truth.
+
 ## Updating after a merge to main
 
 ```bash
