@@ -194,9 +194,9 @@ export class MemoryStore {
   /**
    * The user's standing rules: every Markdown file under rules/ except
    * README.md, as one text block for the server instructions. Output is capped
-   * at maxBytes so a large rules folder can't flood the context window.
+   * at maxBytes (4 KB, about 1,000 tokens) so a large rules folder can't flood the context window.
    */
-  async readRules(maxBytes = 8 * 1024): Promise<{ text: string; files: string[]; truncated: boolean }> {
+  async readRules(maxBytes = 4 * 1024): Promise<{ text: string; files: string[]; truncated: boolean }> {
     const dir = this.resolve("rules");
     if (!(await exists(dir))) return { text: "", files: [], truncated: false };
     const files = (await this.list("rules", true)).filter(

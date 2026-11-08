@@ -71,12 +71,30 @@ test("no rules folder: base instructions only", async () => {
   }
 });
 
+test("guidelines are not loaded up front, only pointed to", async () => {
+  const { root, store } = await tempStore();
+  try {
+    await mkdir(path.join(root, "rules"));
+    await mkdir(path.join(root, "guidelines"));
+    await writeFile(path.join(root, "rules/git.md"), "- Never push to main.\n");
+    await writeFile(path.join(root, "guidelines/email.md"), "- Sign emails with just my first name.\n");
+
+    const instructions = await connect(store);
+    assert.match(instructions, /Never push to main/);
+    assert.match(instructions, /guidelines\//); // Claude is told the tier exists
+    assert.doesNotMatch(instructions, /Sign emails/); // but its content isn't loaded
+    assert.equal((await store.search("email sign")).at(0)?.path, "guidelines/email.md");
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("rules over the size limit are truncated with a note", async () => {
   const { root, store } = await tempStore();
   try {
     await mkdir(path.join(root, "rules"));
-    await writeFile(path.join(root, "rules/a.md"), "- " + "a".repeat(5000) + "\n");
-    await writeFile(path.join(root, "rules/b.md"), "- " + "b".repeat(5000) + "\n");
+    await writeFile(path.join(root, "rules/a.md"), "- " + "a".repeat(3000) + "\n");
+    await writeFile(path.join(root, "rules/b.md"), "- " + "b".repeat(3000) + "\n");
     const rules = await store.readRules();
     assert.equal(rules.truncated, true);
     assert.deepEqual(rules.files, ["rules/a.md"]);

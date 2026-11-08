@@ -8,10 +8,16 @@ Before answering questions about the user, people, projects or past decisions, c
 Before creating a file, search for an existing one to update instead.
 Start with INDEX.md to learn how the memory is organized, and follow its conventions.
 
-Standing rules live in rules/ (one file per topic, e.g. rules/git.md, rules/projects.md).
-When the user states a new standing rule ("from now on...", "always...", "every project..."),
-save it to the right rules/ file with memory_append (or read, then memory_write to edit one),
-and confirm in one line. The rules below are loaded at the start of each conversation.`;
+Rules come in two tiers:
+- Core rules, in rules/, apply to almost everything. They are loaded in full below, at the
+  start of every conversation, so this tier must stay short.
+- Situational rules and preferences, in guidelines/ (one file per topic, e.g.
+  guidelines/email.md, guidelines/python.md), matter only sometimes. They are not loaded:
+  search for them with memory_search when a task might be covered by one.
+When the user states a new rule or preference ("from now on...", "always...", "when I..."),
+save it to guidelines/ by default. Save it to rules/ only if the user says it applies
+everywhere, or you ask and they confirm. Use memory_append (or read, then memory_write to
+edit), and confirm in one line where you saved it.`;
 
 /** Server instructions: the base text plus the user's current rules/ files. */
 export async function buildInstructions(store: MemoryStore): Promise<string> {
