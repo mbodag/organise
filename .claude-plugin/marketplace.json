@@ -1,0 +1,14 @@
+{
+  "name": "personal-agent",
+  "description": "Personal agent plugin: memory, calendar and Jira workflows",
+  "owner": {
+    "name": "Matis Bodaghi"
+  },
+  "plugins": [
+    {
+      "name": "personal-agent",
+      "source": "./plugin",
+      "description": "Personal assistant: remembers things about your life in a Markdown memory, and works with your calendar and Jira."
+    }
+  ]
+}

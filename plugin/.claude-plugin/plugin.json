@@ -1,0 +1,6 @@
+{
+  "name": "personal-agent",
+  "version": "0.1.0",
+  "description": "Personal assistant: remembers things about your life in a Markdown memory, and works with your calendar and Jira.",
+  "author": { "name": "Matis Bodaghi" }
+}
