@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "personal-memory": {
-      "type": "http",
-      "url": "${PERSONAL_MEMORY_URL:-http://localhost:8787/mcp}",
-      "headers": { "Authorization": "Bearer ${PERSONAL_MEMORY_TOKEN:-}" }
-    }
-  }
-}

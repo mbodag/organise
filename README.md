@@ -74,9 +74,8 @@ After pushing this repo to GitHub:
 /plugin install personal-agent@personal-agent
 ```
 
-`plugin/.mcp.json` connects to the memory server directly
-(`PERSONAL_MEMORY_URL`, `PERSONAL_MEMORY_TOKEN`; it defaults to `localhost:8787` for local dev).
-**If you added the custom connector, delete `plugin/.mcp.json`**, or you'll get the memory tools twice.
+The plugin has no MCP config of its own: Claude Code reaches the memory through the same
+claude.ai connector as the phone and web ([ADR 0003](docs/decisions/0003-memory-server-as-mcp-connector.md)).
 
 Commands: `/remember <thing>`, `/recall <question>`, `/tidy` (file the inbox), `/brief [today|this week]`.
 

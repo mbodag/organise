@@ -15,9 +15,10 @@ but they only run in Claude Code, not in the Claude mobile or web chat. **Connec
 - The memory is served by **our own remote MCP server** (`memory-mcp/`), added as a
   **custom connector** in claude.ai. This is the part every surface shares.
 - The **plugin** (`plugin/`) is a Claude Code add-on: the `memory-keeper` skill,
-  `/remember`, `/recall`, `/tidy`, `/brief`, and (planned, #4) a `SessionStart` hook. Its
-  `.mcp.json` points at the same server; drop it when the connector is configured, so the
-  tools don't appear twice.
+  `/remember`, `/recall`, `/tidy`, `/brief`, and (planned, #4) a `SessionStart` hook. It has
+  **no MCP config of its own**: Claude Code gets the memory tools from the same claude.ai
+  connector. (Until 2026-11-08 it shipped a `.mcp.json` pointing at the server; with the
+  connector in place that gave Claude Code the tools twice, so it was removed.)
 - Calendar, email, files and Jira use existing connectors (Google, Atlassian).
 
 ## Why
