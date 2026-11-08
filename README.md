@@ -32,7 +32,8 @@ Create a fine-grained GitHub token with **Contents: read and write** on that rep
 
 ## 2. Deploy the memory server
 
-Any host that runs a Docker container and keeps it running works (Fly.io, Railway,
+We host it on a Fly.io Sprite (see [docs/decisions/0001](docs/decisions/0001-host-memory-server-on-fly-sprites.md)); deploy steps land with issue #2.
+Any host that runs a Docker container and keeps it running also works (Fly.io Machines, Railway,
 Render, a small VPS). Set these environment variables (see `memory-mcp/.env.example`):
 
 | Variable | Value |
