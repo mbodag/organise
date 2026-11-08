@@ -16,6 +16,7 @@ Edit it freely: change the rules here and Claude's filing changes with them.
 | `areas/` | Ongoing parts of life with no end: health, finances, home, career | `areas/health.md` |
 | `journal/` | Dated log entries, one file per month | `journal/2026-11.md` |
 | `reference/` | Stable facts: accounts, addresses, sizes, how-tos, preferences | `reference/preferences.md` |
+| `rules/` | Standing rules for how Claude should work with you. Loaded at the start of every conversation | `rules/projects.md` |
 | `inbox.md` | Anything that doesn't clearly fit yet. Tidied up later | |
 
 ## File conventions
