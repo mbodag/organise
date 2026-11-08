@@ -20,7 +20,7 @@ Claude Code only: the personal-agent plugin adds the memory-keeper skill and /re
 | `plugin/` | Claude Code plugin: the `memory-keeper` skill, slash commands, and an optional MCP config |
 | `.claude-plugin/marketplace.json` | Lets you install the plugin straight from this repo |
 
-Architecture diagram and status: [`docs/architecture.html`](docs/architecture.html) (download and open in a browser). Running costs: [`docs/costs.md`](docs/costs.md).
+Architecture diagram and status: [`docs/architecture.html`](docs/architecture.html) (download and open in a browser). Running costs: [`docs/costs.md`](docs/costs.md). Why things are built this way: [`docs/decisions/`](docs/decisions/README.md).
 
 ## 1. Create the memory repo
 
@@ -32,7 +32,8 @@ Create a fine-grained GitHub token with **Contents: read and write** on that rep
 
 ## 2. Deploy the memory server
 
-Any host that runs a Docker container and keeps it running works (Fly.io, Railway,
+We host it on a Fly.io Sprite (see [docs/decisions/0001](docs/decisions/0001-host-memory-server-on-fly-sprites.md)); deploy steps land with issue #2.
+Any host that runs a Docker container and keeps it running also works (Fly.io Machines, Railway,
 Render, a small VPS). Set these environment variables (see `memory-mcp/.env.example`):
 
 | Variable | Value |

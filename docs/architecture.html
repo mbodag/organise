@@ -146,10 +146,10 @@
 
       <!-- Services -->
       <rect class="box planned-s" x="660" y="70" width="310" height="104" rx="10"/>
-      <text class="t" x="676" y="100">Memory server · Fly.io</text>
+      <text class="t" x="676" y="100">Memory server · Fly Sprite</text>
       <text class="s" x="676" y="122">memory-mcp · 7 memory_* tools</text>
       <text class="s" x="676" y="142">sends rules/ in its instructions</text>
-      <text class="s" x="676" y="162">1 always-on machine · ~$2.19/mo</text>
+      <text class="s" x="676" y="162">sleeps when idle · ~$0/mo</text>
 
       <rect class="box live-s" x="660" y="214" width="310" height="104" rx="10"/>
       <text class="t" x="676" y="244">mbodag/memory · GitHub</text>
@@ -205,7 +205,7 @@
             <td><a href="https://github.com/mbodag/organise">mbodag/organise</a> (public)</td>
             <td><span class="chip built">Built</span></td></tr>
         <tr><td><strong>Running memory server</strong></td>
-            <td>Fly.io: one always-on machine, <code>https://&lt;app&gt;.fly.dev/mcp/&lt;token&gt;</code></td>
+            <td>Fly.io Sprite, sleeps when idle: <code>https://&lt;name&gt;.sprites.app/mcp/&lt;token&gt;</code>. Why: <a href="decisions/0001-host-memory-server-on-fly-sprites.md">ADR 0001</a></td>
             <td><span class="chip planned">Planned · #2</span></td></tr>
         <tr><td><strong>Memory connector</strong></td>
             <td>claude.ai → Customize → Connectors</td>
@@ -247,8 +247,8 @@
   <div class="totals">
     <div class="card total"><div class="label">Today</div><div class="value">$0</div>
       <div class="note">per month, on top of your Claude plan</div></div>
-    <div class="card total"><div class="label">After deploying the memory server</div><div class="value">~$2.19</div>
-      <div class="note">per month, on top of your Claude plan</div></div>
+    <div class="card total"><div class="label">After deploying the memory server</div><div class="value">~$0</div>
+      <div class="note">per month: cents of usage, and Fly waives invoices under $5</div></div>
   </div>
   <div class="card scroll">
     <table>
@@ -256,13 +256,13 @@
       <tbody>
         <tr><td>Claude subscription</td><td>Apps, Claude Code, connectors</td><td><span class="chip live">Existing</span></td><td class="num">your plan</td></tr>
         <tr><td>GitHub Free</td><td>organise (public), memory (private)</td><td><span class="chip live">Live</span></td><td class="num">$0</td></tr>
-        <tr><td>Fly.io machine</td><td>shared-cpu-1x, 256 MB, always on</td><td><span class="chip planned">Planned</span></td><td class="num">~$2.19</td></tr>
-        <tr><td>Fly.io IPv4 + bandwidth</td><td>Shared IPv4, light text traffic</td><td><span class="chip planned">Planned</span></td><td class="num">~$0</td></tr>
+        <tr><td>Fly.io Sprite</td><td>Billed only while awake: cents a month</td><td><span class="chip planned">Planned</span></td><td class="num">~$0.10</td></tr>
+        <tr><td>Fly.io waiver</td><td>Invoices under $5 are waived</td><td><span class="chip planned">Planned</span></td><td class="num">−all</td></tr>
         <tr><td>Google &amp; Atlassian connectors</td><td>Calendar, Gmail, Drive, Jira</td><td><span class="chip live">Live</span></td><td class="num">$0</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="sub" style="margin-top:12px">Optional, not chosen: GitHub Pro $4/mo · GitHub Team $4/user/mo · Railway ~$5/mo · Render ~$7/mo.
+  <p class="sub" style="margin-top:12px">Optional, not chosen: Fly Machine $2.28/mo (fallback) · GitHub Pro $4/mo · GitHub Team $4/user/mo · Railway ~$5/mo · Render ~$7/mo.
     Future: Claude API usage if we build our own client (#6). Full breakdown and sources in
     <a href="costs.md">costs.md</a>, which is the file to update first.</p>
 
