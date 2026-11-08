@@ -28,18 +28,26 @@ Create a **private** GitHub repo (for example `my-memory`), and copy the content
 `memory-template/` into it. That repo is your memory; you can edit it anytime and the
 server picks up your changes within about 30 seconds.
 
-Create a fine-grained GitHub token with **Contents: read and write** on that repo only.
+The server reaches it with an SSH deploy key, created on the host during deploy (step 2).
 
 ## 2. Deploy the memory server
 
-We host it on a Fly.io Sprite (see [docs/decisions/0001](docs/decisions/0001-host-memory-server-on-fly-sprites.md)); deploy steps land with issue #2.
-Any host that runs a Docker container and keeps it running also works (Fly.io Machines, Railway,
-Render, a small VPS). Set these environment variables (see `memory-mcp/.env.example`):
+We host it on a Fly.io Sprite (why: [ADR 0001](docs/decisions/0001-host-memory-server-on-fly-sprites.md)).
+Follow [`memory-mcp/DEPLOY.md`](memory-mcp/DEPLOY.md): it creates the Sprite, generates the
+deploy key and `MCP_AUTH_TOKEN` on it, and starts the service.
+
+**Finding the server's URL:** run `sprite info` once the `sprite` CLI is logged in (see
+[DEPLOY.md](memory-mcp/DEPLOY.md#finding-the-url-later), including how to find it without the CLI).
+It prints `https://<name>-<org>.sprites.app`. Check it with `curl https://<sprite-url>/health`,
+which returns `{"ok":true}`. The URL isn't recorded in this repo on purpose: the repo is public.
+
+Any other host that runs a Docker container and keeps it running also works (Fly.io Machines,
+Railway, Render, a small VPS). Set these environment variables (see `memory-mcp/.env.example`):
 
 | Variable | Value |
 |---|---|
 | `MCP_AUTH_TOKEN` | A long random secret: `openssl rand -hex 32` |
-| `GIT_REMOTE` | `https://x-access-token:<github-token>@github.com/<you>/my-memory.git` |
+| `GIT_REMOTE` | `git@github.com:<you>/my-memory.git` with a deploy key, or `https://x-access-token:<github-token>@github.com/<you>/my-memory.git` with a fine-grained token (Contents: read and write) |
 | `GIT_BRANCH` | `main` |
 
 With git sync on, the files on the server are just a working copy, so the host doesn't
