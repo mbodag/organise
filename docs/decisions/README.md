@@ -13,3 +13,4 @@ supersedes it rather than editing history.
 | [0005](0005-access-token-url-and-deploy-key.md) | Access: a secret token in the connector URL; an SSH deploy key for the memory repo | Accepted |
 | [0006](0006-repos-and-workflow.md) | Two repos, reviewed main, issues as the backlog | Accepted |
 | [0007](0007-stay-portable.md) | Stay portable: open formats and MCP | Accepted |
+| [0008](0008-deploy-on-merge-to-main.md) | Deploy the memory server automatically on every merge to main | Accepted |

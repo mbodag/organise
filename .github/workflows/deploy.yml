@@ -1,0 +1,80 @@
+# CD: every merge to main that touches the memory server deploys it to the Sprite.
+# Why and how: docs/decisions/0008-deploy-on-merge-to-main.md
+#
+# Never runs on pull requests: the job uses secrets, and this repo is public.
+# Secrets live in the "production" environment (Settings → Environments):
+#   SPRITES_TOKEN  Sprites token, format org-slug/org-id/token-id/token-value
+#                  (create at https://fly.io/dashboard/<org>/sprites/tokens)
+#   SPRITE_URL     https://<name>-<org>.sprites.app, kept out of the repo and the logs
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "memory-mcp/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, in merge order; never cancel one halfway.
+concurrency:
+  group: deploy-sprite
+  cancel-in-progress: false
+
+env:
+  SPRITE_ORG: matis-bodaghi
+  SPRITE_NAME: memory
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - name: Install the Sprites CLI
+        run: |
+          curl -fsSL https://sprites.dev/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Authenticate
+        env:
+          SPRITES_TOKEN: ${{ secrets.SPRITES_TOKEN }}
+        run: |
+          if [ -z "$SPRITES_TOKEN" ]; then
+            echo "::error::SPRITES_TOKEN is not set in the production environment"; exit 1
+          fi
+          sprite auth setup --token "$SPRITES_TOKEN" >/dev/null
+
+      - name: Deploy main on the Sprite
+        run: |
+          sprite exec --no-stdin -o "$SPRITE_ORG" -s "$SPRITE_NAME" --dir /home/sprite -- \
+            env BRANCH=main organise/memory-mcp/scripts/sprite-deploy.sh
+
+      - name: Check the deployed commit
+        run: |
+          deployed=$(sprite exec --no-stdin -o "$SPRITE_ORG" -s "$SPRITE_NAME" --dir /home/sprite -- \
+            git -C organise rev-parse HEAD | tr -d '\r')
+          echo "Sprite is at $deployed; this run was triggered by $GITHUB_SHA"
+          if [ "$deployed" != "$GITHUB_SHA" ]; then
+            echo "::warning::Deployed commit differs from the trigger (a newer merge may have landed first)"
+          fi
+
+      - name: Health check
+        env:
+          SPRITE_URL: ${{ secrets.SPRITE_URL }}
+        run: |
+          if [ -z "$SPRITE_URL" ]; then
+            echo "::error::SPRITE_URL is not set in the production environment"; exit 1
+          fi
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS --max-time 10 "$SPRITE_URL/health"; then echo; echo "healthy"; exit 0; fi
+            echo "not healthy yet (attempt $i), retrying in 5s"; sleep 5
+          done
+          echo "::error::health check failed"; exit 1
