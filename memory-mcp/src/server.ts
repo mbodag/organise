@@ -50,6 +50,29 @@ export function buildServer(store: MemoryStore, instructions: string = BASE_INST
     };
 
   server.registerTool(
+    "memory_rules",
+    {
+      title: "Load the user's core rules",
+      description:
+        "Returns the user's core standing rules (rules/ in their memory). Call this once at the start of every conversation, before your first reply, unless a section titled \"The user's standing rules\" is already in your context. Follow the rules it returns for the whole conversation.",
+      inputSchema: {},
+      annotations: { readOnlyHint: true },
+    },
+    safe(async () => {
+      const rules = await store.readRules();
+      if (!rules.text) return text("No core rules saved yet (rules/ is empty).");
+      const note = rules.truncated
+        ? "\n\n(Some rules files were left out because of the size limit: use memory_list on rules/ and read the rest.)"
+        : "";
+      return text(
+        `## The user's standing rules (follow them)\n\n${rules.text}${note}\n\n` +
+          "Situational rules live in guidelines/: search them with memory_search when a task might be covered. " +
+          "Save newly stated rules to guidelines/ by default, and to rules/ only if the user says they apply everywhere.",
+      );
+    }),
+  );
+
+  server.registerTool(
     "memory_search",
     {
       title: "Search memory",
