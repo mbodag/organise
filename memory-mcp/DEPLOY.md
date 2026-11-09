@@ -79,8 +79,23 @@ in this repo because the repo is public; `sprite info` is the source of truth.
 
 ## Updating after a merge to main
 
+**Automatic.** Every merge to `main` that touches `memory-mcp/` runs
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml): tests, then
+`sprite-deploy.sh` on the Sprite, then a health check
+([ADR 0008](../docs/decisions/0008-deploy-on-merge-to-main.md)). Watch it under the repo's
+**Actions** tab. To redeploy without a code change: Actions → Deploy → *Run workflow*.
+
+**One-time setup** for the automation, in GitHub → Settings → Environments → `production`:
+
+| Secret | Value |
+|---|---|
+| `SPRITES_TOKEN` | A Sprites token from `https://fly.io/dashboard/<org>/sprites/tokens` (format `org-slug/org-id/token-id/token-value`) |
+| `SPRITE_URL` | The Sprite's URL from `sprite info`, e.g. `https://<name>-<org>.sprites.app` |
+
+**By hand** (fallback, e.g. if Actions is down), from any machine where the CLI is logged in:
+
 ```bash
-sprite exec -- organise/memory-mcp/scripts/sprite-deploy.sh
+sprite exec -s memory -- organise/memory-mcp/scripts/sprite-deploy.sh
 ```
 
 ## Troubleshooting

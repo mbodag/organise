@@ -36,6 +36,11 @@ We host it on a Fly.io Sprite (why: [ADR 0001](docs/decisions/0001-host-memory-s
 Follow [`memory-mcp/DEPLOY.md`](memory-mcp/DEPLOY.md): it creates the Sprite, generates the
 deploy key and `MCP_AUTH_TOKEN` on it, and starts the service.
 
+**After that, deploys are automatic:** merging a change to `memory-mcp/` into `main` runs
+the Deploy workflow, which tests it and deploys it to the Sprite
+([ADR 0008](docs/decisions/0008-deploy-on-merge-to-main.md)). Pull requests run the same
+tests through the CI workflow.
+
 **Finding the server's URL:** run `sprite info` once the `sprite` CLI is logged in (see
 [DEPLOY.md](memory-mcp/DEPLOY.md#finding-the-url-later), including how to find it without the CLI).
 It prints `https://<name>-<org>.sprites.app`. Check it with `curl https://<sprite-url>/health`,
